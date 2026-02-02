@@ -5,8 +5,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- MOCK DATABASE (Fake Memory) ---
-const products = [
+// --- THE MEMORY BANK ---
+// This acts as our database for now.
+let products = [
     {
         id: 1,
         name: "Oversized Street Tee",
@@ -22,26 +23,35 @@ const products = [
         price: 1499,
         image: "https://images.unsplash.com/photo-1517487881594-2787fef5ebf7",
         deliveryTime: "55 mins"
-    },
-    {
-        id: 3,
-        name: "Luxury Silk Shirt",
-        brand: "Skill Edit",
-        price: 2499,
-        image: "https://images.unsplash.com/photo-1598532163257-ae3c6b2524b6",
-        deliveryTime: "30 mins"
     }
 ];
 
-// Route to get products
+// 1. GET: Show all products
 app.get('/api/products', (req, res) => {
     res.json(products);
 });
 
-app.get('/', (req, res) => {
-    res.send('Instaware Server is Running (Simulation Mode)');
+// 2. POST: Add a new product (The Admin Feature)
+app.post('/api/products', (req, res) => {
+    const newProduct = {
+        id: Date.now(), // Generate a unique ID based on time
+        name: req.body.name,
+        brand: req.body.brand || "Instaware",
+        price: Number(req.body.price),
+        image: req.body.image || "https://images.unsplash.com/photo-1523381210434-271e8be1f52b",
+        deliveryTime: "60 mins"
+    };
+    products.push(newProduct); // Add to the array
+    res.json(newProduct);
+});
+
+// 3. DELETE: Remove a product
+app.delete('/api/products/:id', (req, res) => {
+    const idToDelete = Number(req.params.id);
+    products = products.filter(product => product.id !== idToDelete);
+    res.json({ success: true });
 });
 
 app.listen(5000, () => {
-    console.log("🚀 Server running on port 5000");
+    console.log("🚀 Server running on port 5000 (Admin Mode Enabled)");
 });
