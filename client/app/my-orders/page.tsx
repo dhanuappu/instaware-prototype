@@ -22,7 +22,7 @@ export default function MyOrdersPage() {
     setUserMobile(mobile);
 
     // 2. Fetch Orders for this Mobile Number
-    fetch(`http://localhost:5000/api/orders/user/${mobile}`)
+    fetch(`https://instaware-prototype.onrender.com/api/orders/user/${mobile}`)
       .then(res => res.json())
       .then(data => {
         setOrders(data);

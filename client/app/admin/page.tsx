@@ -16,8 +16,8 @@ export default function AdminPage() {
     if (!id) router.push('/login');
     setShopId(id);
     // Fetch Data
-    fetch('http://localhost:5000/api/products').then(res=>res.json()).then(setProducts);
-    fetch(`http://localhost:5000/api/orders/shop/${id}`).then(res=>res.json()).then(setOrders);
+    fetch('https://instaware-prototype.onrender.com/api/products').then(res=>res.json()).then(setProducts);
+    fetch(`https://instaware-prototype.onrender.com/api/orders/shop/${id}`).then(res=>res.json()).then(setOrders);
   }, []);
 
   // --- LOGIC: REQUEST 3RD PARTY DELIVERY ---
@@ -37,7 +37,7 @@ export default function AdminPage() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-    await fetch('http://localhost:5000/api/products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...form, shopId}) });
+    await fetch('https://instaware-prototype.onrender.com/api/products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...form, shopId}) });
     window.location.reload();
   };
 

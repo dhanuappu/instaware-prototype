@@ -1,0 +1,63 @@
+# Query: http://localhost:5000
+# ContextLines: 1
+
+14 results - 10 files
+
+client\app\page.tsx:
+  20    useEffect(() => {
+  21:     fetch('https://instaware-prototype.onrender.com/api/products')
+  22        .then(res => res.json())
+
+client\app\admin\page.tsx:
+  18      // Fetch Data
+  19:     fetch('https://instaware-prototype.onrender.com/api/products').then(res=>res.json()).then(setProducts);
+  20:     fetch(`https://instaware-prototype.onrender.com/api/orders/shop/${id}`).then(res=>res.json()).then(setOrders);
+  21    }, []);
+
+  39      e.preventDefault();
+  40:     await fetch('https://instaware-prototype.onrender.com/api/products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({...form, shopId}) });
+  41      window.location.reload();
+
+client\app\cart\page.tsx:
+  32  
+  33:     await fetch('https://instaware-prototype.onrender.com/api/orders', {
+  34          method: 'POST',
+
+client\app\checkout\page.tsx:
+  64  
+  65:     const res = await fetch('https://instaware-prototype.onrender.com/api/orders', {
+  66        method: 'POST',
+
+client\app\login\page.tsx:
+  16      setLoading(true); setError('');
+  17:     const endpoint = isLogin ? 'https://instaware-prototype.onrender.com/api/auth/login' : 'https://instaware-prototype.onrender.com/api/auth/signup';
+  18  
+
+client\app\my-orders\page.tsx:
+  24      // 2. Fetch Orders for this Mobile Number
+  25:     fetch(`https://instaware-prototype.onrender.com/api/orders/user/${mobile}`)
+  26        .then(res => res.json())
+
+client\app\partner\page.tsx:
+  17      e.preventDefault();
+  18:     const res = await fetch('https://instaware-prototype.onrender.com/api/shops/register', {
+  19        method: 'POST',
+
+client\app\product\[id]\page.tsx:
+  12    useEffect(() => {
+  13:     fetch(`https://instaware-prototype.onrender.com/api/products/${params.id}`).then(res=>res.json()).then(setProduct);
+  14    }, [params.id]);
+
+client\app\super-admin\page.tsx:
+  10      // Fetch all registered shops
+  11:     fetch('https://instaware-prototype.onrender.com/api/shops')
+  12        .then(res => res.json())
+
+client\app\superadmin\page.tsx:
+  17              // 1. Fetch Orders
+  18:             const ordersRes = await fetch('https://instaware-prototype.onrender.com/api/admin/orders');
+  19              const ordersData = await ordersRes.json();
+
+  28              // 2. Fetch Products
+  29:             const prodRes = await fetch('https://instaware-prototype.onrender.com/api/products');
+  30              const prodData = await prodRes.json();

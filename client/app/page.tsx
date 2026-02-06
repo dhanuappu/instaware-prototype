@@ -18,7 +18,7 @@ export default function Home() {
   const categories = ["All", "Sneakers", "Hoodies", "Watches", "T-Shirts", "Pants"];
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/products')
+    fetch('https://instaware-prototype.onrender.com/api/products')
       .then(res => res.json())
       .then(data => { setProducts(data); setLoading(false); })
       .catch(err => setLoading(false));

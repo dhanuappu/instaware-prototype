@@ -15,7 +15,7 @@ export default function SuperAdminPage() {
     const fetchData = async () => {
         try {
             // 1. Fetch Orders
-            const ordersRes = await fetch('http://localhost:5000/api/admin/orders');
+            const ordersRes = await fetch('https://instaware-prototype.onrender.com/api/admin/orders');
             const ordersData = await ordersRes.json();
             
             // Safety Check: Is it an array?
@@ -26,7 +26,7 @@ export default function SuperAdminPage() {
             }
 
             // 2. Fetch Products
-            const prodRes = await fetch('http://localhost:5000/api/products');
+            const prodRes = await fetch('https://instaware-prototype.onrender.com/api/products');
             const prodData = await prodRes.json();
             
             if (Array.isArray(prodData)) {

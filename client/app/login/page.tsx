@@ -14,7 +14,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
-    const endpoint = isLogin ? 'http://localhost:5000/api/auth/login' : 'http://localhost:5000/api/auth/signup';
+    const endpoint = isLogin ? 'https://instaware-prototype.onrender.com/api/auth/login' : 'https://instaware-prototype.onrender.com/api/auth/signup';
 
     try {
         const res = await fetch(endpoint, {

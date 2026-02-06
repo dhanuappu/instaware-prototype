@@ -8,7 +8,7 @@ export default function SuperAdmin() {
 
   useEffect(() => {
     // Fetch all registered shops
-    fetch('http://localhost:5000/api/shops')
+    fetch('https://instaware-prototype.onrender.com/api/shops')
       .then(res => res.json())
       .then(data => {
         setShops(data);
