@@ -1,97 +1,143 @@
 'use client';
-import React, { useState } from 'react';
-import { ArrowLeft, CreditCard, MapPin } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { MapPin, CreditCard, CheckCircle, ArrowLeft, User, Smartphone } from 'lucide-react';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  
-  // SIMULATION: Imagine the user added these 2 items
-  const cartItems = [
-    { id: 1, name: "Oversized Street Tee", price: 899, size: "L" },
-    { id: 2, name: "Vintage Cargo Pants", price: 1499, size: "32" }
-  ];
+  const searchParams = useSearchParams();
 
-  const subtotal = 2398;
-  const deliveryFee = 40; // Quick Commerce standard
-  const platformFee = 10;
-  const total = subtotal + deliveryFee + platformFee;
+  const [cartItems, setCartItems] = useState([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const [form, setForm] = useState({
+    customerName: '',
+    mobile: '',
+    address: 'No. 12, KR Puram, Bangalore'
+  });
+
+  useEffect(() => {
+    // 1. Load User Data
+    const savedMobile = localStorage.getItem('userMobile');
+    const savedName = localStorage.getItem('userName');
+    const savedAddr = localStorage.getItem('userAddress');
+
+    if (savedMobile) {
+        setForm(prev => ({
+            ...prev,
+            mobile: savedMobile,
+            customerName: savedName || '',
+            address: savedAddr || prev.address
+        }));
+    }
+
+    // 2. Load Cart Items
+    const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    setCartItems(savedCart);
+    const sum = savedCart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    setTotalPrice(sum);
+
+  }, []);
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    if(cartItems.length === 0) return alert("Cart is empty!");
+    setLoading(true);
+
+    // --- THE FIX: FORMAT ITEMS CORRECTLY FOR SERVER ---
+    const formattedItems = cartItems.map(item => ({
+        productId: item.productId,
+        productName: item.name, // MAP 'name' -> 'productName'
+        price: item.price,
+        shopId: item.shopId,
+        quantity: item.quantity
+    }));
+
+    const orderData = {
+      customerName: form.customerName,
+      mobile: form.mobile,
+      address: form.address,
+      items: formattedItems, // Send the Fixed List
+      totalAmount: totalPrice
+    };
+
+    const res = await fetch('http://localhost:5000/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderData)
+    });
+
+    if (res.ok) {
+      alert("Order Placed Successfully!");
+      localStorage.removeItem('cart'); 
+      router.push('/my-orders');
+    } else {
+      alert("Order Failed");
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-black font-sans pb-20">
+    <div className="min-h-screen bg-gray-50 text-black font-sans p-6 flex justify-center items-center">
       
-      {/* Header */}
-      <div className="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-10">
-        <button onClick={() => router.back()}>
-          <ArrowLeft size={24} />
+      <div className="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl">
+        <button onClick={() => router.back()} className="mb-6 text-gray-400 hover:text-black">
+             <ArrowLeft />
         </button>
-        <h1 className="text-xl font-bold">Checkout</h1>
-      </div>
 
-      <div className="p-4 max-w-lg mx-auto">
-        
-        {/* Delivery Address Card */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-gray-100 p-2 rounded-full">
-              <MapPin size={20} />
+        <h1 className="text-2xl font-black mb-1">CHECKOUT</h1>
+        <p className="text-gray-400 text-sm mb-6">Review your {cartItems.length} items</p>
+
+        {/* ORDER SUMMARY */}
+        <div className="bg-gray-50 p-4 rounded-xl mb-6 border border-gray-200 max-h-40 overflow-y-auto">
+            {cartItems.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center mb-2 border-b border-gray-200 pb-2 last:border-0">
+                    <div className="flex items-center gap-2">
+                         <span className="text-xs font-bold text-gray-500 bg-gray-200 w-5 h-5 flex items-center justify-center rounded-full">
+                            {item.quantity}
+                         </span>
+                        <div className="text-xs font-bold">{item.name}</div>
+                    </div>
+                    <div className="text-sm font-mono">₹{item.price}</div>
+                </div>
+            ))}
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-black">
+                <div className="font-bold text-sm uppercase">Total To Pay</div>
+                <div className="text-xl font-black">₹{totalPrice}</div>
             </div>
-            <h3 className="font-bold">Delivery to Home</h3>
-          </div>
-          <p className="text-gray-500 text-sm ml-10">
-            No. 402, Green Avenue, Indiranagar, Bangalore - 560038
-          </p>
-          <p className="text-green-600 text-xs font-bold ml-10 mt-1">
-            ⚡ Arriving in 38 mins
-          </p>
         </div>
 
-        {/* Item Summary */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-4">
-          <h3 className="font-bold mb-4 text-sm uppercase tracking-wider text-gray-400">Order Summary</h3>
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
-              <div>
-                <div className="font-bold">{item.name}</div>
-                <div className="text-xs text-gray-400">Size: {item.size}</div>
-              </div>
-              <div className="font-mono">₹{item.price}</div>
-            </div>
-          ))}
-        </div>
+        <form onSubmit={handlePlaceOrder} className="space-y-4">
+          <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+            <User className="text-gray-400" size={20}/>
+            <input className="w-full bg-transparent font-bold outline-none" placeholder="Your Name" value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})} required />
+          </div>
 
-        {/* Bill Details (The Receipt) */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
-          <h3 className="font-bold mb-4 text-sm uppercase tracking-wider text-gray-400">Bill Details</h3>
-          
-          <div className="flex justify-between mb-2 text-sm text-gray-600">
-            <span>Item Total</span>
-            <span>₹{subtotal}</span>
+          <div className="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+            <Smartphone className="text-gray-400" size={20}/>
+            <input className="w-full bg-transparent font-bold outline-none" placeholder="Mobile Number" value={form.mobile} readOnly={!!localStorage.getItem('userMobile')} onChange={e => setForm({...form, mobile: e.target.value})} required />
+             {localStorage.getItem('userMobile') && <CheckCircle size={16} className="text-green-500"/>}
           </div>
-          <div className="flex justify-between mb-2 text-sm text-gray-600">
-            <span>Delivery Fee</span>
-            <span>₹{deliveryFee}</span>
-          </div>
-          <div className="flex justify-between mb-2 text-sm text-gray-600">
-            <span>Platform Fee</span>
-            <span>₹{platformFee}</span>
-          </div>
-          <div className="border-t border-dashed border-gray-300 my-3"></div>
-          <div className="flex justify-between font-black text-lg">
-            <span>TO PAY</span>
-            <span>₹{total}</span>
-          </div>
-        </div>
 
-        {/* Payment Button (Sticky Bottom) */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white p-4 border-t border-gray-200">
-          <div className="max-w-lg mx-auto">
-            <button className="w-full bg-black text-white py-4 rounded-xl font-bold text-lg flex justify-between px-6 hover:bg-gray-800">
-              <span className="flex items-center gap-2"><CreditCard size={20}/> Pay Now</span>
-              <span>₹{total}</span>
-            </button>
+          <div className="flex gap-2 items-start bg-gray-50 p-3 rounded-xl border border-gray-200">
+             <MapPin className="text-gray-400 mt-1" size={20}/>
+             <textarea className="w-full bg-transparent font-bold outline-none text-sm" value={form.address} onChange={e => setForm({...form, address: e.target.value})} rows={2} />
           </div>
-        </div>
+
+          <div className="flex items-center gap-3 p-3 border border-green-500/30 bg-green-50 rounded-xl">
+             <CreditCard className="text-green-600" size={20}/>
+             <div>
+                <div className="text-xs font-bold text-green-700">PAYMENT METHOD</div>
+                <div className="font-bold text-sm">Cash on Delivery (COD)</div>
+             </div>
+             <CheckCircle className="ml-auto text-green-600" size={20}/>
+          </div>
+
+          <button disabled={loading} className="w-full bg-black text-white py-4 rounded-xl font-bold hover:scale-105 transition shadow-lg mt-4 disabled:opacity-50">
+            {loading ? "PROCESSING..." : `CONFIRM ORDER (₹${totalPrice})`}
+          </button>
+        </form>
 
       </div>
     </div>
