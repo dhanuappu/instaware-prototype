@@ -39,6 +39,10 @@ const catMeta = {
   Watches:    { emoji: '⌚', color: '#26A541' },
   'T-Shirts': { emoji: '👕', color: '#E91E63' },
   Pants:      { emoji: '👖', color: '#FF5722' },
+  Dress:      { emoji: '👗', color: '#x1F457' },
+  Sandals:    { emoji: '👡', color: '#x1F461' },
+  Saree:      { emoji: '🥻', color: '#x1F97B' },
+
 };
 
 const DISCOUNTS = [10, 15, 20, 25, 30, 40, 50];
@@ -107,7 +111,7 @@ export default function Home() {
             style={{ cursor: 'pointer', fontWeight: 900, fontSize: 22, color: '#fff', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 3, userSelect: 'none', whiteSpace: 'nowrap', margin: 0 }}
           >
             <span style={{ color: T.yellow }}>⚡</span>
-            Insta<span style={{ color: T.yellow }}>ware</span>
+            Insta<span style={{ color: T.yellow }}>wear</span>
           </h1>
 
           {/* Search bar */}
@@ -201,7 +205,7 @@ export default function Home() {
               {/* Sidebar header */}
               <div style={{ padding: '18px 20px', borderBottom: '1px solid rgba(255,255,255,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#fff', fontWeight: 900, fontSize: 18, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ color: T.yellow }}>⚡</span>Instaware
+                  <span style={{ color: T.yellow }}>⚡</span>Instawear
                 </span>
                 <button onClick={() => setIsMenuOpen(false)} style={{ color: 'rgba(255,255,255,0.6)', background: 'none', border: 'none', cursor: 'pointer', padding: 4 }}>
                   <X size={22} />
@@ -460,7 +464,7 @@ export default function Home() {
 
                       {/* Brand */}
                       <p style={{ fontSize: 9, fontWeight: 900, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {product.brand || 'Instaware'}
+                        {product.brand || 'Instawear'}
                       </p>
 
                       {/* Product name — 2-line clamp */}
@@ -557,13 +561,12 @@ export default function Home() {
       <footer style={{ background: `linear-gradient(135deg, ${T.brandDk}, #0D47A1)`, padding: '20px 16px' }}>
         <div style={{ maxWidth: 1700, margin: '0 auto', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <p style={{ color: '#fff', fontWeight: 900, fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ color: T.yellow }}>⚡</span>Insta<span style={{ color: T.yellow }}>ware</span>
+            <span style={{ color: T.yellow }}>⚡</span>Insta<span style={{ color: T.yellow }}>wear</span>
           </p>
           <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, margin: 0 }}>Premium products, delivered fast.</p>
-          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, margin: 0 }}>© {new Date().getFullYear()} Instaware</p>
+          <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, margin: 0 }}>© {new Date().getFullYear()} Instwear</p>
         </div>
       </footer>
-
     </div>
   );
 }

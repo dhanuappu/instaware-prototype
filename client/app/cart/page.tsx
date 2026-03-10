@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, ArrowLeft, ShoppingCart, Tag, Truck, Shield, ChevronRight, Sparkles } from 'lucide-react';
 
-/* ── Design tokens – matches the main Instaware theme ── */
+/* ── Design tokens – matches the main Instawear theme ── */
 const T = {
   brand:      '#2874F0',
   brandDk:    '#1a5dc8',

@@ -188,7 +188,7 @@ export default function ProductPage() {
             {/* Brand + name */}
             <div>
               <p style={{ fontSize: 10, fontWeight: 900, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 4px' }}>
-                {product.brand || 'Instaware'}
+                {product.brand || 'Instawear'}
               </p>
               <h1 style={{ fontSize: 'clamp(18px,4vw,26px)', fontWeight: 900, color: T.ink, margin: '0 0 8px', lineHeight: 1.25, letterSpacing: '-0.3px' }}>
                 {product.name}
@@ -240,7 +240,7 @@ export default function ProductPage() {
               {[
                 { icon: <Truck size={15} color={T.brand} />,      text: 'Free delivery on this order',   sub: 'Arrives in 2–4 business days' },
                 { icon: <RotateCcw size={15} color={T.orange} />, text: '7-day easy return & exchange',  sub: 'No questions asked returns'     },
-                { icon: <ShieldCheck size={15} color={T.green} />, text: '100% Genuine Product',          sub: 'Verified by Instaware'          },
+                { icon: <ShieldCheck size={15} color={T.green} />, text: '100% Genuine Product',          sub: 'Verified by Instawear'          },
               ].map((row, i) => (
                 <div key={row.text}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>

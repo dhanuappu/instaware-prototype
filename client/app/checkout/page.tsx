@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, CreditCard, ShoppingBag, Shield, CheckCircle2, ChevronRight, Package, Truck, Star, Zap, Lock } from 'lucide-react';
 
-/* ── Design tokens – matches Instaware theme ── */
+/* ── Design tokens – matches Instawear theme ── */
 const T = {
   brand:     '#2874F0',
   brandDk:   '#1a5dc8',
@@ -372,7 +372,7 @@ export default function CheckoutPage() {
           {/* Locked payment notice */}
           <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: T.brandLt, borderRadius: 7 }}>
             <Shield size={12} color={T.brand} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: T.brand }}>Payments powered by Instaware SecurePay™</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: T.brand }}>Payments powered by Instawear SecurePay™</span>
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 'use client';
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Package, Upload, X, LogOut, Truck, CheckCircle, LayoutDashboard, ShoppingBag, BarChart2, Zap, TrendingUp, Clock, AlertCircle, ChevronRight, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, Smartphone, Lock, User, ShieldCheck, AlertCircle, Zap, Eye, EyeOff, Store } from 'lucide-react';
 
 /* ── Design tokens ── */
 const T = {
@@ -10,439 +10,362 @@ const T = {
   brandLt:  '#EBF2FF',
   yellow:   '#FFD60A',
   orange:   '#FF6B00',
-  orangeBg: '#FFF3EB',
   green:    '#26A541',
   greenBg:  '#E8F8EE',
-  greenBd:  '#B2DFC1',
-  purple:   '#7C3AED',
-  purpleBg: '#F3EEFF',
   red:      '#F43F3F',
   redBg:    '#FFF0F0',
-  bg:       '#F1F3F6',
   white:    '#FFFFFF',
   ink:      '#212121',
   sub:      '#535665',
   muted:    '#9E9E9E',
+  bg:       '#F1F3F6',
   border:   '#E0E0E0',
 };
 
-/* Status badge config */
-const STATUS = {
-  'Delivered':         { bg: T.greenBg,  text: T.green,  border: T.greenBd                    },
-  'Out for Delivery':  { bg: T.purpleBg, text: T.purple, border: 'rgba(124,58,237,.3)'         },
-  'Packed':            { bg: T.brandLt,  text: T.brand,  border: 'rgba(40,116,240,.3)'         },
-  'Pending':           { bg: T.orangeBg, text: T.orange, border: 'rgba(255,107,0,.3)'          },
-  'Rider Assigned':    { bg: T.greenBg,  text: T.green,  border: T.greenBd                    },
-};
-const getStatus = (s) => STATUS[s] || STATUS['Pending'];
+export default function LoginPage() {
+  const router = useRouter();
+  const [isLogin, setIsLogin]   = useState(true);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
+  const [showPass, setShowPass] = useState(false);
 
-export default function AdminPage() {
-  const router   = useRouter();
-  const [activeTab, setActiveTab] = useState('orders');
-  const [products, setProducts]   = useState([]);
-  const [orders, setOrders]       = useState([]);
-  const [form, setForm]           = useState({ name: '', price: '', image: '' });
-  const [shopId, setShopId]       = useState('');
-  const [shopName, setShopName]   = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ name: '', mobile: '', password: '', role: 'customer' });
 
-  useEffect(() => {
-    const id   = localStorage.getItem('shopId');
-    const name = localStorage.getItem('shopName') || 'Your Store';
-    if (!id) router.push('/login');
-    setShopId(id);
-    setShopName(name);
-    fetch('https://instaware-prototype.onrender.com/api/products').then(r => r.json()).then(setProducts);
-    fetch(`https://instaware-prototype.onrender.com/api/orders/shop/${id}`).then(r => r.json()).then(setOrders);
-  }, []);
-
-  const handleShipOrder = async (orderId) => {
-    alert('Request sent to Delivery Partner (Shadowfax)!');
-    setOrders(orders.map(o => o._id === orderId ? { ...o, status: 'Out for Delivery' } : o));
-  };
-
-  const handleAdd = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    await fetch('https://instaware-prototype.onrender.com/api/products', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ ...form, shopId }),
-    });
-    window.location.reload();
+    setLoading(true); setError('');
+    const endpoint = isLogin
+      ? 'https://instaware-prototype.onrender.com/api/auth/login'
+      : 'https://instaware-prototype.onrender.com/api/auth/signup';
+
+    try {
+      const res  = await fetch(endpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong');
+
+      if (isLogin) {
+        localStorage.setItem('userName',   data.user.name);
+        localStorage.setItem('userMobile', data.user.mobile);
+        localStorage.setItem('role',       data.user.role);
+        localStorage.setItem('userId',     data.user._id);
+
+        const role = data.user.role;
+
+        if (role === 'superadmin') {
+          setLoading(false);
+          router.push('/superadmin');
+        } else if (role === 'vendor' || role === 'partner') {
+          localStorage.setItem('shopId',   data.user._id);
+          localStorage.setItem('shopName', data.user.name + "'s Store");
+          setLoading(false);
+          router.push('/admin');
+        } else {
+          // role === 'customer' or any other default
+          setLoading(false);
+          router.push('/');
+        }
+      } else {
+        alert('Account Created! Please Login.');
+        setIsLogin(true); setLoading(false);
+      }
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  const handleImage = (e) => {
-    const reader = new FileReader();
-    reader.onload = () => setForm({ ...form, image: reader.result });
-    reader.readAsDataURL(e.target.files[0]);
-  };
-
-  /* Derived metrics */
-  const totalRevenue   = orders.reduce((s, o) => s + Number(o.totalAmount || 0), 0);
-  const pendingOrders  = orders.filter(o => !o.status || o.status === 'Pending').length;
-  const deliveredCount = orders.filter(o => o.status === 'Delivered').length;
-
-  const TABS = [
-    { key: 'orders',    label: 'Orders',    icon: ShoppingBag,      count: orders.length   },
-    { key: 'inventory', label: 'Inventory', icon: Package,          count: products.length },
-  ];
+  const switchMode = () => { setIsLogin(!isLogin); setError(''); };
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: "'Segoe UI','Helvetica Neue',sans-serif", color: T.ink }}>
+    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: "'Segoe UI','Helvetica Neue',sans-serif", display: 'flex', flexDirection: 'column' }}>
       <style>{`
-        @keyframes spin     { to{transform:rotate(360deg)} }
-        @keyframes fadeUp   { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-        .page-body { animation: fadeUp 0.3s ease both; }
-        .input-wrap:focus-within { border-color: ${T.brand} !important; box-shadow: 0 0 0 3px rgba(40,116,240,0.14) !important; background: ${T.white} !important; }
-        .input-wrap:focus-within .field-icon { color: ${T.brand} !important; }
-        .dash-input { outline: none; border: none; background: transparent; width: 100%; font-size: 14px; font-weight: 600; color: ${T.ink}; }
-        .dash-input::placeholder { color: ${T.muted}; font-weight: 500; }
-        .tab-btn    { transition: all 0.15s ease; }
-        .order-row  { transition: background 0.1s ease; }
-        .order-row:hover { background: #f7f9ff !important; }
-        .prod-row   { transition: background 0.1s ease; }
-        .prod-row:hover { background: #f7f9ff !important; }
-        .ship-btn:hover  { filter: brightness(1.06); }
-        .ship-btn:active { transform: scale(0.97); }
-        .pub-btn:hover   { filter: brightness(1.08); }
-        .pub-btn:active  { transform: scale(0.97); }
-        .stat-card:hover { box-shadow: 0 4px 20px rgba(40,116,240,0.13) !important; transform: translateY(-1px); }
-        .stat-card { transition: all 0.2s ease; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideUp   { from { opacity:0; transform:translateY(16px);  } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse     { 0%,100%{box-shadow:0 4px 20px rgba(40,116,240,0.45)} 50%{box-shadow:0 4px 32px rgba(40,116,240,0.75)} }
+        @keyframes spin      { to { transform:rotate(360deg) } }
+        .hero-section { animation: slideDown 0.35s ease both; }
+        .form-card    { animation: slideUp  0.35s ease both; }
+        .input-field:focus { outline: none; border-color: ${T.brand} !important; box-shadow: 0 0 0 3px rgba(40,116,240,0.15) !important; }
+        .cta-btn      { animation: pulse 2.4s ease-in-out infinite; transition: all 0.15s ease; }
+        .cta-btn:hover  { filter: brightness(1.07); }
+        .cta-btn:active { transform: scale(0.97); animation: none; }
+        .role-btn { transition: all 0.15s ease; }
+        .switch-link:hover { text-decoration: underline; }
+        .trust-badge { transition: transform 0.15s; }
+        .trust-badge:hover { transform: translateY(-2px); }
       `}</style>
 
-      {/* ══ TOP NAV ══ */}
-      <nav style={{ background: T.white, borderBottom: `1px solid ${T.border}`, boxShadow: '0 1px 6px rgba(0,0,0,0.07)', position: 'sticky', top: 0, zIndex: 50 }}>
-        {/* Yellow promo strip */}
-        <div style={{ background: T.yellow, color: T.brandDk, textAlign: 'center', padding: '3px 12px', fontSize: 11, fontWeight: 900, letterSpacing: '0.06em' }}>
-          ⚡ Instaware Vendor Dashboard &nbsp;·&nbsp; Powered by Instaware Partner Hub
+      {/* ══════════════════════════════════════════
+          HERO HEADER  –  colorful top section
+      ══════════════════════════════════════════ */}
+      <div
+        className="hero-section"
+        style={{
+          background: `linear-gradient(135deg, ${T.brandDk} 0%, ${T.brand} 60%, #4A90E2 100%)`,
+          padding: '40px 20px 80px',
+          position: 'relative',
+          overflow: 'hidden',
+          /* Rounded bottom edge */
+          borderBottomLeftRadius: '32px',
+          borderBottomRightRadius: '32px',
+        }}
+      >
+        {/* Decorative blobs */}
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,214,10,0.15)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: 10, left: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,107,0,0.12)', pointerEvents: 'none' }} />
+
+        {/* Yellow promo strip at very top */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0,
+          background: T.yellow, color: T.brandDk,
+          textAlign: 'center', padding: '4px 12px',
+          fontSize: 11, fontWeight: 900, letterSpacing: '0.06em',
+        }}>
+          ⚡ New users get <span style={{ textDecoration: 'underline' }}>INSTA20</span> — 20% off first order!
         </div>
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          {/* Left: Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 34, height: 34, background: T.brand, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={19} color="#fff" fill="#fff" />
+        {/* Logo */}
+        <div style={{ marginTop: 28, textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <div
+            onClick={() => router.push('/')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+          >
+            <div style={{ width: 40, height: 40, background: T.yellow, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 14px rgba(255,214,10,0.45)' }}>
+              <Zap size={22} color={T.brandDk} fill={T.brandDk} />
             </div>
-            <div>
-              <p style={{ fontSize: 14, fontWeight: 900, color: T.ink, margin: 0, letterSpacing: '-0.3px' }}>
-                Instaware <span style={{ color: T.brand }}>Vendor Hub</span>
-              </p>
-              <p style={{ fontSize: 10, color: T.muted, margin: 0, fontWeight: 600 }}>{shopName}</p>
-            </div>
-          </div>
-
-          {/* Right: actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={() => window.location.reload()}
-              style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: 8, padding: '6px 10px', cursor: 'pointer', color: T.sub, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700 }}
-            >
-              <RefreshCw size={14} /> Refresh
-            </button>
-            <button
-              onClick={() => { localStorage.clear(); router.push('/login'); }}
-              style={{ background: T.redBg, border: `1px solid rgba(244,63,63,0.2)`, borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: T.red, display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 800 }}
-            >
-              <LogOut size={14} /> Logout
-            </button>
+            <span style={{ fontSize: 26, fontWeight: 900, color: T.white, letterSpacing: '-0.5px' }}>
+              Insta<span style={{ color: T.yellow }}>ware</span>
+            </span>
           </div>
         </div>
-      </nav>
 
-      <div className="page-body" style={{ maxWidth: 1200, margin: '0 auto', padding: '16px 12px 40px' }}>
-
-        {/* ══ STAT CARDS ══ */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 18 }} className="stats-grid">
-          <style>{`@media(min-width:640px){ .stats-grid{ grid-template-columns: repeat(4, 1fr) !important; } }`}</style>
-
-          {[
-            { icon: ShoppingBag, color: T.brand,  bg: T.brandLt,  label: 'Total Orders',    value: orders.length,                           sub: 'All time'            },
-            { icon: AlertCircle, color: T.orange, bg: T.orangeBg, label: 'Pending',          value: pendingOrders,                           sub: 'Needs action'        },
-            { icon: CheckCircle, color: T.green,  bg: T.greenBg,  label: 'Delivered',        value: deliveredCount,                          sub: 'Completed'           },
-            { icon: TrendingUp,  color: T.purple, bg: T.purpleBg, label: 'Revenue',          value: `₹${totalRevenue.toLocaleString('en-IN')}`, sub: 'Total earned'     },
-          ].map(s => {
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.label}
-                className="stat-card"
-                style={{ background: T.white, border: `1px solid ${T.border}`, borderRadius: 12, padding: '14px 14px', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <p style={{ fontSize: 10, fontWeight: 900, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>{s.label}</p>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon size={15} color={s.color} />
-                  </div>
-                </div>
-                <p style={{ fontSize: 26, fontWeight: 900, color: T.ink, margin: '0 0 2px', letterSpacing: '-0.5px', lineHeight: 1 }}>{s.value}</p>
-                <p style={{ fontSize: 10, color: T.muted, margin: 0, fontWeight: 600 }}>{s.sub}</p>
-              </div>
-            );
-          })}
+        {/* Welcome copy */}
+        <div style={{ marginTop: 20, textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <h1 style={{ color: T.white, fontSize: 'clamp(22px, 5vw, 30px)', fontWeight: 900, margin: '0 0 6px', letterSpacing: '-0.5px' }}>
+            {isLogin ? 'Welcome back! 🚀' : 'Create your account 🎉'}
+          </h1>
+          <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 14, margin: 0, fontWeight: 600 }}>
+            {isLogin
+              ? 'Sign in to continue shopping on Instawear'
+              : 'Join thousands of happy Instawear customers'}
+          </p>
         </div>
+      </div>
 
-        {/* ══ TAB BAR ══ */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-          {TABS.map(tab => {
-            const Icon   = tab.icon;
-            const active = activeTab === tab.key;
-            return (
+      {/* ══════════════════════════════════════════
+          FORM CARD  –  overlaps the hero
+      ══════════════════════════════════════════ */}
+      <div style={{ flex: 1, padding: '0 16px 32px', marginTop: -40, maxWidth: 480, width: '100%', margin: '-40px auto 0', boxSizing: 'border-box' }}>
+        <div
+          className="form-card"
+          style={{
+            background: T.white,
+            borderRadius: 20,
+            boxShadow: '0 8px 40px rgba(40,116,240,0.14)',
+            padding: '28px 24px 24px',
+            border: `1px solid ${T.border}`,
+          }}
+        >
+          {/* Tab switcher: Login / Sign Up */}
+          <div style={{ display: 'flex', background: T.bg, borderRadius: 12, padding: 4, marginBottom: 22, gap: 4 }}>
+            {[
+              { key: true,  label: 'Login'   },
+              { key: false, label: 'Sign Up' },
+            ].map(tab => (
               <button
-                key={tab.key}
-                className="tab-btn"
-                onClick={() => setActiveTab(tab.key)}
+                key={String(tab.key)}
+                type="button"
+                onClick={() => switchMode()}
+                className="role-btn"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  padding: '8px 16px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  background: active ? T.brand : T.white,
-                  color:      active ? '#fff'   : T.sub,
-                  fontWeight: 800, fontSize: 13,
-                  boxShadow:  active ? '0 3px 12px rgba(40,116,240,0.3)' : `0 1px 4px rgba(0,0,0,0.07)`,
-                  border: active ? 'none' : `1px solid ${T.border}`,
+                  flex: 1, border: 'none', borderRadius: 9, padding: '9px 0', cursor: 'pointer', fontWeight: 900, fontSize: 13, letterSpacing: '0.04em',
+                  background: isLogin === tab.key ? T.brand : 'transparent',
+                  color:      isLogin === tab.key ? T.white  : T.muted,
+                  boxShadow:  isLogin === tab.key ? '0 2px 10px rgba(40,116,240,0.3)' : 'none',
                 }}
               >
-                <Icon size={15} />
                 {tab.label}
-                <span style={{
-                  fontSize: 10, fontWeight: 900, padding: '1px 7px', borderRadius: 20,
-                  background: active ? 'rgba(255,255,255,0.25)' : T.bg,
-                  color:      active ? '#fff' : T.muted,
-                }}>
-                  {tab.count}
-                </span>
               </button>
-            );
-          })}
-        </div>
-
-        {/* ══════════════════════════════════════
-            INVENTORY TAB
-        ══════════════════════════════════════ */}
-        {activeTab === 'inventory' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-            {/* Add Product Form */}
-            <div style={{ background: T.white, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: '0 1px 8px rgba(0,0,0,0.07)', padding: '18px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 32, height: 32, background: T.brandLt, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Plus size={17} color={T.brand} />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: 15, fontWeight: 900, color: T.ink, margin: 0 }}>Add New Product</h2>
-                  <p style={{ fontSize: 11, color: T.muted, margin: 0, fontWeight: 600 }}>Fill in details and upload an image to publish</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleAdd}>
-                <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                  {/* Image upload */}
-                  <div style={{ position: 'relative', width: 88, height: 88, borderRadius: 12, border: `2px dashed ${form.image ? T.green : T.border}`, background: form.image ? T.greenBg : T.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'pointer', transition: 'all 0.15s' }}>
-                    {form.image
-                      ? <img src={form.image} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                          <Upload size={20} color={T.muted} />
-                          <span style={{ fontSize: 9, fontWeight: 700, color: T.muted, textAlign: 'center', lineHeight: 1.3 }}>Upload Image</span>
-                        </div>
-                    }
-                    <input type="file" accept="image/*" onChange={handleImage} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
-                    {form.image && (
-                      <button
-                        type="button"
-                        onClick={() => setForm({ ...form, image: '' })}
-                        style={{ position: 'absolute', top: 3, right: 3, background: T.red, border: 'none', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-                      >
-                        <X size={10} color="#fff" />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Fields */}
-                  <div style={{ flex: 1, minWidth: 200, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 800, color: T.sub, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 4 }}>Product Name</label>
-                      <div className="input-wrap" style={{ display: 'flex', alignItems: 'center', background: T.bg, border: `1.5px solid ${T.border}`, borderRadius: 9, padding: '9px 12px', gap: 8, transition: 'all 0.15s' }}>
-                        <Package size={15} color={T.muted} className="field-icon" style={{ flexShrink: 0, transition: 'color 0.15s' }} />
-                        <input className="dash-input" placeholder="e.g., Nike Air Max 90" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-                      </div>
-                    </div>
-                    <div>
-                      <label style={{ fontSize: 10, fontWeight: 800, color: T.sub, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 4 }}>Price (₹)</label>
-                      <div className="input-wrap" style={{ display: 'flex', alignItems: 'center', background: T.bg, border: `1.5px solid ${T.border}`, borderRadius: 9, padding: '9px 12px', gap: 8, transition: 'all 0.15s' }}>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: T.muted, flexShrink: 0 }}>₹</span>
-                        <input className="dash-input" type="number" placeholder="0.00" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Publish button */}
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="pub-btn"
-                    style={{
-                      background: submitting ? '#9BB8F0' : `linear-gradient(135deg, ${T.brandDk}, ${T.brand})`,
-                      color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px',
-                      fontWeight: 900, fontSize: 13, cursor: submitting ? 'not-allowed' : 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 6, alignSelf: 'flex-end',
-                      transition: 'all 0.15s', boxShadow: '0 3px 12px rgba(40,116,240,0.3)',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {submitting
-                      ? <><span style={{ width: 13, height: 13, border: '2px solid rgba(255,255,255,0.35)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite', display: 'inline-block' }} />Publishing…</>
-                      : <><Plus size={15} /> Publish Product</>
-                    }
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            {/* Products table */}
-            <div style={{ background: T.white, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-              {/* Table header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${T.border}`, background: T.bg }}>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 900, color: T.ink, margin: 0 }}>Your Products</p>
-                  <p style={{ fontSize: 11, color: T.muted, margin: 0, fontWeight: 600 }}>{products.length} items listed</p>
-                </div>
-                <span style={{ fontSize: 10, fontWeight: 900, background: T.brandLt, color: T.brand, padding: '3px 10px', borderRadius: 20 }}>
-                  {products.length} Active
-                </span>
-              </div>
-
-              {/* Column labels */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 80px', padding: '8px 16px', background: '#FAFAFA', borderBottom: `1px solid ${T.border}` }}>
-                {['Image', 'Product', 'Price', ''].map(h => (
-                  <span key={h} style={{ fontSize: 10, fontWeight: 800, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{h}</span>
-                ))}
-              </div>
-
-              {/* Rows */}
-              <div style={{ overflowX: 'auto' }}>
-                {products.map((p, i) => (
-                  <div key={p._id} className="prod-row" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 80px', alignItems: 'center', padding: '10px 16px', borderBottom: i < products.length - 1 ? `1px solid ${T.border}` : 'none', background: T.white }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 8, background: T.bg, border: `1px solid ${T.border}`, overflow: 'hidden' }}>
-                      <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                    </div>
-                    <div style={{ paddingRight: 8 }}>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: T.ink, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</p>
-                      <span style={{ fontSize: 10, fontWeight: 900, background: T.greenBg, color: T.green, padding: '2px 8px', borderRadius: 20 }}>Active</span>
-                    </div>
-                    <p style={{ fontSize: 15, fontWeight: 900, color: T.ink, margin: 0 }}>₹{Number(p.price).toLocaleString('en-IN')}</p>
-                    <button style={{ background: T.redBg, border: `1px solid rgba(244,63,63,0.2)`, borderRadius: 7, padding: '5px 10px', fontSize: 11, fontWeight: 800, color: T.red, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.12s' }}
-                      onMouseEnter={e => e.currentTarget.style.background = '#FFD5D5'}
-                      onMouseLeave={e => e.currentTarget.style.background = T.redBg}
-                    >
-                      <Trash2 size={12} /> Del
-                    </button>
-                  </div>
-                ))}
-
-                {products.length === 0 && (
-                  <div style={{ padding: '36px 20px', textAlign: 'center' }}>
-                    <Package size={36} color={T.muted} style={{ margin: '0 auto 10px' }} />
-                    <p style={{ fontSize: 14, fontWeight: 700, color: T.sub, margin: '0 0 4px' }}>No products yet</p>
-                    <p style={{ fontSize: 12, color: T.muted, margin: 0 }}>Add your first product above to start selling</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            ))}
           </div>
-        )}
 
-        {/* ══════════════════════════════════════
-            ORDERS TAB
-        ══════════════════════════════════════ */}
-        {activeTab === 'orders' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Error banner */}
+          {error && (
+            <div style={{ background: T.redBg, border: `1px solid rgba(244,63,63,0.25)`, borderRadius: 9, padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <AlertCircle size={15} color={T.red} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.red }}>{error}</span>
+            </div>
+          )}
 
-            {orders.length === 0 ? (
-              <div style={{ background: T.white, borderRadius: 14, border: `1px solid ${T.border}`, padding: '48px 24px', textAlign: 'center', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
-                <ShoppingBag size={42} color={T.muted} style={{ margin: '0 auto 12px' }} />
-                <p style={{ fontSize: 16, fontWeight: 800, color: T.sub, margin: '0 0 4px' }}>No orders yet</p>
-                <p style={{ fontSize: 13, color: T.muted, margin: 0 }}>When customers order from your shop, they'll appear here.</p>
-              </div>
-            ) : orders.map((o, cardIdx) => {
-              const st = getStatus(o.status || 'Pending');
-              return (
-                <div key={o._id} style={{ background: T.white, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: '0 1px 6px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
-                  {/* Colour accent top stripe */}
-                  <div style={{ height: 3, background: `linear-gradient(90deg, ${st.text}, ${st.text}55)` }} />
+          {/* FORM */}
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-                  <div style={{ padding: '14px 16px' }}>
+              {/* ── Signup-only fields ── */}
+              {!isLogin && (
+                <>
+                  {/* Full name */}
+                  <div style={{ position: 'relative' }}>
+                    <User size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: T.muted, pointerEvents: 'none' }} />
+                    <input
+                      className="input-field"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '13px 14px 13px 42px', fontSize: 15, fontWeight: 600, borderRadius: 10, border: `1.5px solid ${T.border}`, background: T.bg, color: T.ink, transition: 'border 0.15s, box-shadow 0.15s' }}
+                      placeholder="Full Name"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      required
+                    />
+                  </div>
 
-                    {/* ── Order header row ── */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, marginBottom: 12 }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
-                          <p style={{ fontSize: 15, fontWeight: 900, color: T.ink, margin: 0 }}>{o.customerName}</p>
-                          {/* Status badge */}
-                          <span style={{ fontSize: 10, fontWeight: 900, background: st.bg, color: st.text, border: `1.5px solid ${st.border}`, padding: '2px 9px', borderRadius: 20, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: st.text, display: 'inline-block' }} />
-                            {o.status || 'Pending'}
-                          </span>
-                        </div>
-                        <p style={{ fontSize: 11, color: T.muted, margin: '0 0 2px', fontWeight: 600 }}>📞 {o.mobile}</p>
-                        <p style={{ fontSize: 11, color: T.muted, margin: 0, fontWeight: 600, maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {o.address}</p>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <p style={{ fontSize: 22, fontWeight: 900, color: T.green, margin: '0 0 2px', letterSpacing: '-0.5px' }}>₹{Number(o.totalAmount).toLocaleString('en-IN')}</p>
-                        <p style={{ fontSize: 10, color: T.muted, margin: 0, fontFamily: 'monospace', fontWeight: 700 }}>#{o._id?.slice(-6).toUpperCase()}</p>
-                      </div>
-                    </div>
-
-                    {/* ── Items list ── */}
-                    <div style={{ background: T.bg, borderRadius: 9, padding: '10px 12px', marginBottom: 12, border: `1px solid ${T.border}` }}>
-                      <p style={{ fontSize: 10, fontWeight: 900, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 7px' }}>Order Items</p>
-                      {o.items.map((item, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: idx < o.items.length - 1 ? `1px dashed ${T.border}` : 'none' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {item.image && (
-                              <div style={{ width: 32, height: 32, borderRadius: 6, background: T.white, border: `1px solid ${T.border}`, overflow: 'hidden', flexShrink: 0 }}>
-                                <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                              </div>
-                            )}
-                            <span style={{ fontSize: 12, fontWeight: 700, color: T.sub }}>{item.name || item.productName}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: 10, fontWeight: 900, background: T.brandLt, color: T.brand, padding: '2px 7px', borderRadius: 20 }}>×{item.quantity || 1}</span>
-                            <span style={{ fontSize: 13, fontWeight: 900, color: T.ink }}>₹{Number(item.price).toLocaleString('en-IN')}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* ── Action buttons ── */}
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {o.status !== 'Out for Delivery' && o.status !== 'Delivered' ? (
+                  {/* Role selector */}
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 900, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Account Type</p>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {[
+                        { val: 'customer', icon: '🛍️', label: 'Customer' },
+                        { val: 'vendor',   icon: '🏪', label: 'Vendor'   },
+                      ].map(r => (
                         <button
-                          className="ship-btn"
-                          onClick={() => handleShipOrder(o._id)}
+                          key={r.val}
+                          type="button"
+                          onClick={() => setForm({ ...form, role: r.val })}
+                          className="role-btn"
                           style={{
-                            flex: 1, minWidth: 160,
-                            background: `linear-gradient(90deg, ${T.brandDk}, ${T.brand})`,
-                            color: '#fff', border: 'none', borderRadius: 9, padding: '10px 16px',
-                            fontWeight: 900, fontSize: 13, cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                            boxShadow: '0 3px 12px rgba(40,116,240,0.3)', transition: 'all 0.15s',
+                            flex: 1, border: `2px solid ${form.role === r.val ? T.brand : T.border}`, borderRadius: 10, padding: '10px 8px', cursor: 'pointer', fontWeight: 800, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                            background: form.role === r.val ? T.brandLt : T.white,
+                            color:      form.role === r.val ? T.brand   : T.sub,
                           }}
                         >
-                          <Truck size={15} /> Request Shadowfax Pickup
+                          <span style={{ fontSize: 16 }}>{r.icon}</span>{r.label}
                         </button>
-                      ) : (
-                        <button disabled style={{ flex: 1, minWidth: 160, background: T.greenBg, border: `1px solid ${T.greenBd}`, borderRadius: 9, padding: '10px 16px', fontWeight: 900, fontSize: 13, color: T.green, cursor: 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                          <CheckCircle size={15} /> Rider Assigned
-                        </button>
-                      )}
+                      ))}
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                </>
+              )}
 
+              {/* Mobile number */}
+              <div style={{ position: 'relative' }}>
+                {/* +91 prefix */}
+                <div style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: 6, pointerEvents: 'none' }}>
+                  <span style={{ fontSize: 14, fontWeight: 800, color: T.sub }}>🇮🇳</span>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: T.sub }}>+91</span>
+                  <div style={{ width: 1, height: 16, background: T.border }} />
+                </div>
+                <input
+                  className="input-field"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '13px 14px 13px 68px', fontSize: 15, fontWeight: 600, borderRadius: 10, border: `1.5px solid ${T.border}`, background: T.bg, color: T.ink, transition: 'border 0.15s, box-shadow 0.15s' }}
+                  placeholder="Mobile Number"
+                  type="tel"
+                  value={form.mobile}
+                  onChange={e => setForm({ ...form, mobile: e.target.value })}
+                  required
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ position: 'relative' }}>
+                <Lock size={18} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: T.muted, pointerEvents: 'none' }} />
+                <input
+                  className="input-field"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '13px 44px 13px 42px', fontSize: 15, fontWeight: 600, borderRadius: 10, border: `1.5px solid ${T.border}`, background: T.bg, color: T.ink, transition: 'border 0.15s, box-shadow 0.15s' }}
+                  placeholder="Password"
+                  type={showPass ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: T.muted, padding: 4, display: 'flex' }}
+                >
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {/* CTA button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="cta-btn"
+                style={{
+                  width: '100%', border: 'none', borderRadius: 12, padding: '15px', fontWeight: 900, fontSize: 16, cursor: loading ? 'not-allowed' : 'pointer',
+                  background: loading ? '#9BB8F0' : `linear-gradient(90deg, ${T.brand} 0%, #1a7fe8 100%)`,
+                  color: T.white, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '0.02em',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <span style={{ display: 'inline-block', width: 16, height: 16, border: '2.5px solid rgba(255,255,255,0.35)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    Processing…
+                  </>
+                ) : (
+                  <>
+                    {isLogin ? 'Login to Instawear' : 'Create Account'}
+                    <ArrowRight size={18} />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {/* Switch mode link */}
+          <p style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: T.sub, fontWeight: 600 }}>
+            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            <button
+              type="button"
+              onClick={switchMode}
+              className="switch-link"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 900, color: T.brand, padding: 0 }}
+            >
+              {isLogin ? 'Sign Up' : 'Login'}
+            </button>
+          </p>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '18px 0 16px' }}>
+            <div style={{ flex: 1, height: 1, background: T.border }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: T.muted, whiteSpace: 'nowrap' }}>SECURED BY</span>
+            <div style={{ flex: 1, height: 1, background: T.border }} />
+          </div>
+
+          {/* Trust badges */}
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+            {[
+              { icon: '🔒', label: '256-bit SSL'   },
+              { icon: '🛡️', label: 'Privacy Safe'  },
+              { icon: '✅', label: 'Verified App'  },
+            ].map(b => (
+              <div key={b.label} className="trust-badge" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                <span style={{ fontSize: 20 }}>{b.icon}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: T.muted }}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Social proof strip below card */}
+        <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {[
+            { emoji: '⭐', text: '4.8 Rating' },
+            { emoji: '👥', text: '10k+ Users' },
+            { emoji: '🚀', text: 'Fast Delivery' },
+          ].map(s => (
+            <div key={s.text} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: T.white, borderRadius: 20, padding: '5px 12px', fontSize: 11, fontWeight: 700, color: T.sub, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: `1px solid ${T.border}` }}>
+              <span>{s.emoji}</span>{s.text}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer note */}
+        <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: T.muted, lineHeight: 1.5, padding: '0 8px' }}>
+          By continuing, you agree to Instawear's <span style={{ color: T.brand, fontWeight: 700 }}>Terms of Service</span> and <span style={{ color: T.brand, fontWeight: 700 }}>Privacy Policy</span>.
+        </p>
       </div>
     </div>
   );

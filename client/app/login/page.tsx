@@ -150,8 +150,8 @@ export default function LoginPage() {
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.72)', fontSize: 14, margin: 0, fontWeight: 600 }}>
             {isLogin
-              ? 'Sign in to continue shopping on Instaware'
-              : 'Join thousands of happy Instaware customers'}
+              ? 'Sign in to continue shopping on '
+              : 'Join thousands of happy  customers'}
           </p>
         </div>
       </div>
@@ -306,7 +306,7 @@ export default function LoginPage() {
                   </>
                 ) : (
                   <>
-                    {isLogin ? 'Login to Instaware' : 'Create Account'}
+                    {isLogin ? 'Login to ' : 'Create Account'}
                     <ArrowRight size={18} />
                   </>
                 )}
@@ -364,7 +364,7 @@ export default function LoginPage() {
 
         {/* Footer note */}
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 11, color: T.muted, lineHeight: 1.5, padding: '0 8px' }}>
-          By continuing, you agree to Instaware's <span style={{ color: T.brand, fontWeight: 700 }}>Terms of Service</span> and <span style={{ color: T.brand, fontWeight: 700 }}>Privacy Policy</span>.
+          By continuing, you agree to 's <span style={{ color: T.brand, fontWeight: 700 }}>Terms of Service</span> and <span style={{ color: T.brand, fontWeight: 700 }}>Privacy Policy</span>.
         </p>
       </div>
     </div>

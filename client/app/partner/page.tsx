@@ -54,7 +54,7 @@ export default function PartnerRegister() {
     });
 
     if (res.ok) {
-      alert('Welcome to Instaware! Your Shop is Live.');
+      alert('Welcome to Instawear! Your Shop is Live.');
       router.push('/admin');
     } else {
       setLoading(false);
@@ -97,7 +97,7 @@ export default function PartnerRegister() {
             </div>
             <div>
               <p style={{ fontSize: 13, fontWeight: 900, color: T.ink, margin: 0, letterSpacing: '-0.3px' }}>
-                Instaware <span style={{ color: T.brand }}>Partner Hub</span>
+                Instawear <span style={{ color: T.brand }}>Partner Hub</span>
               </p>
               <p style={{ fontSize: 10, color: T.muted, margin: 0, fontWeight: 600 }}>Vendor Onboarding Portal</p>
             </div>
@@ -140,11 +140,11 @@ export default function PartnerRegister() {
 
             <div>
               <h1 style={{ color: '#fff', fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, margin: '0 0 10px', lineHeight: 1.15, letterSpacing: '-0.5px' }}>
-                Sell on Instaware.<br />
+                Sell on Instawear.<br />
                 <span style={{ color: T.yellow }}>Grow Your Business.</span>
               </h1>
               <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, margin: '0 0 18px', lineHeight: 1.6, maxWidth: 480, fontWeight: 500 }}>
-                Join 500+ local vendors already growing their business on Instaware. Register your shop in under 3 minutes and start selling today.
+                Join 500+ local vendors already growing their business on Instawear. Register your shop in under 3 minutes and start selling today.
               </p>
 
               {/* Social proof chips */}
@@ -258,7 +258,7 @@ export default function PartnerRegister() {
 
                 {/* T&C note */}
                 <p style={{ fontSize: 11, color: T.muted, margin: '2px 0 4px', lineHeight: 1.5, fontWeight: 500 }}>
-                  By registering, you agree to Instaware's{' '}
+                  By registering, you agree to Instawear's{' '}
                   <span style={{ color: T.brand, fontWeight: 700, cursor: 'pointer' }}>Partner Terms</span> and{' '}
                   <span style={{ color: T.brand, fontWeight: 700, cursor: 'pointer' }}>Privacy Policy</span>.
                 </p>
@@ -371,7 +371,7 @@ export default function PartnerRegister() {
       {/* Footer */}
       <div style={{ background: T.ink, borderTop: `1px solid rgba(255,255,255,0.06)`, padding: '16px 20px', textAlign: 'center' }}>
         <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, fontWeight: 600 }}>
-          ⚡ Instaware Partner Hub · Made with ❤️ in India · © {new Date().getFullYear()}
+          ⚡ Instawear Partner Hub · Made with ❤️ in India · © {new Date().getFullYear()}
         </p>
       </div>
     </div>
