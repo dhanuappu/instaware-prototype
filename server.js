@@ -8,13 +8,19 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 
-const dbURI = 'mongodb+srv://dhanushappu733_db_user:Appu12345@ac-egnrgj8.pd8birm.mongodb.net/instawear?retryWrites=true&w=majority';
+
+const dbURI = process.env.MONGO_URI;
+
+if (!dbURI) {
+  console.error("❌ CRITICAL ERROR: MONGO_URI is missing from environment variables.");
+  process.exit(1);
+}
 
 mongoose.connect(dbURI)
   .then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
   .catch(err => {
     console.error("❌ CRITICAL DB Error. Could not connect:", err.message);
-    process.exit(1); // Stop the server if database fails!
+    process.exit(1);
   });
 
 // 1. The Shop (Vendor)
