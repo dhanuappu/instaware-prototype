@@ -11,7 +11,7 @@ const app = express();
 // Add your live Vercel URL to this array so Render allows it to connect!
 const allowedOrigins = [
   'http://localhost:3000', // Allows local testing
-  'https://your-project-name.vercel.app', // REPLACE THIS with your actual Vercel URL!
+  'https://instaware-prototype.vercel.app', // REPLACE THIS with your actual Vercel URL!
   process.env.FRONTEND_URL // Optional fallback
 ];
 
@@ -197,4 +197,104 @@ app.post('/api/orders', async (req, res) => {
   try {
     const newOrder = new Order(req.body);
     await newOrder.save();
-    res.json({ success: true, orderId: newOrder._id
+    res.json({ success: true, orderId: newOrder._id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/admin/orders', async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET ORDERS FOR A SPECIFIC VENDOR
+app.get('/api/orders/shop/:shopId', async (req, res) => {
+  try {
+    const { shopId } = req.params;
+    // Find orders where the 'items' array contains an item with this shopId
+    const orders = await Order.find({ "items.shopId": shopId }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/orders/:id/status', async (req, res) => {
+  try {
+    const { status } = req.body; 
+    await Order.findByIdAndUpdate(req.params.id, { status: status });
+    res.json({ success: true, status: status });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/orders/customer/:mobile', async (req, res) => {
+  try {
+    const orders = await Order.find({ mobile: req.params.mobile }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/orders/user/:mobile', async (req, res) => {
+  try {
+    const { mobile } = req.params;
+    const orders = await Order.find({ mobile: mobile }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- GLOBAL AUTH ROUTES (Unified Login/Signup) ---
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { name, mobile, password, role } = req.body;
+    
+    const existingUser = await User.findOne({ mobile });
+    if (existingUser) return res.status(400).json({ error: "Mobile number already registered" });
+
+    const newUser = new User({ name, mobile, password, role: role || 'customer' });
+    await newUser.save();
+    
+    res.json({ message: "Account created successfully", user: newUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { mobile, password } = req.body;
+    
+    const user = await User.findOne({ mobile });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.password !== password) return res.status(401).json({ error: "Invalid password" });
+
+    res.json({ 
+        message: "Login successful", 
+        user: { 
+            name: user.name, 
+            mobile: user.mobile, 
+            role: user.role,
+            _id: user._id 
+        } 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- START SERVER ---
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🚀 Hyperlocal Server running on port ${PORT}`);
+});
