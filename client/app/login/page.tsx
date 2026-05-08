@@ -61,13 +61,13 @@ export default function LoginPage() {
 
         if (role === 'superadmin') {
           setLoading(false);
-          router.push('/admin'); // Or '/superadmin' depending on your folder name
+          router.push('/superadmin'); // Or '/superadmin' depending on your folder name
         } else if (role === 'vendor' || role === 'partner') {
           localStorage.setItem('shopId',   data.user._id);
           localStorage.setItem('shopName', data.user.name + "'s Store");
           setLoading(false);
           // 2. THE FIX: Route vendors to the vendor dashboard, NOT the admin dashboard
-          router.push('/vendor'); 
+          router.push('/admin'); 
         } else {
           // role === 'customer' or any other default
           setLoading(false);
