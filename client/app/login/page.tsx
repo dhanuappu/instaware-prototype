@@ -48,6 +48,10 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
 
       if (isLogin) {
+        // 1. THE FIX: Save the ENTIRE user object so your dashboards can read it!
+        localStorage.setItem('user', JSON.stringify(data.user)); 
+        
+        // Keep your legacy flat strings just in case other components need them
         localStorage.setItem('userName',   data.user.name);
         localStorage.setItem('userMobile', data.user.mobile);
         localStorage.setItem('role',       data.user.role);
@@ -57,12 +61,13 @@ export default function LoginPage() {
 
         if (role === 'superadmin') {
           setLoading(false);
-          router.push('/superadmin');
+          router.push('/admin'); // Or '/superadmin' depending on your folder name
         } else if (role === 'vendor' || role === 'partner') {
           localStorage.setItem('shopId',   data.user._id);
           localStorage.setItem('shopName', data.user.name + "'s Store");
           setLoading(false);
-          router.push('/admin');
+          // 2. THE FIX: Route vendors to the vendor dashboard, NOT the admin dashboard
+          router.push('/vendor'); 
         } else {
           // role === 'customer' or any other default
           setLoading(false);
@@ -77,7 +82,7 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
+  
   const switchMode = () => { setIsLogin(!isLogin); setError(''); };
 
   return (
