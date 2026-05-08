@@ -8,11 +8,14 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 
-// Paste this ONE long line inside the parenthesis
-mongoose.connect('mongodb://dhanushappu733_db_user:Dhanu2001@ac-egnrgj8-shard-00-00.pd8birm.mongodb.net:27017,ac-egnrgj8-shard-00-01.pd8birm.mongodb.net:27017,ac-egnrgj8-shard-00-02.pd8birm.mongodb.net:27017/?ssl=true&authSource=admin')
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch(err => console.error("❌ DB Error:", err));
-// --- SCHEMAS (The Blueprints) ---
+const dbURI = 'mongodb+srv://dhanushappu733_db_user:Appu12345@ac-egnrgj8.pd8birm.mongodb.net/instawear?retryWrites=true&w=majority';
+
+mongoose.connect(dbURI)
+  .then(() => console.log("✅ MongoDB Atlas Connected Successfully"))
+  .catch(err => {
+    console.error("❌ CRITICAL DB Error. Could not connect:", err.message);
+    process.exit(1); // Stop the server if database fails!
+  });
 
 // 1. The Shop (Vendor)
 const shopSchema = new mongoose.Schema({
